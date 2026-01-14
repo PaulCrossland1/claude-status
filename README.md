@@ -1,60 +1,65 @@
 # Claude Status Slack Bot
 
-Monitor the Claude status page and post incidents to Slack. Automatically tracks incident status changes and updates existing messages instead of creating duplicates.
+Monitor the Claude status page and post incidents to Slack. Automatically tracks incident status changes and edits existing messages in place.
 
 ## Features
 
-- Polls Claude status RSS feed every 5 minutes (via GitHub Actions)
+- Polls `status.claude.com` RSS feed every 5 minutes via GitHub Actions
 - Posts new incidents to Slack with formatted messages
-- Edits existing messages when incident status changes
-- Prevents duplicate notifications with state tracking
+- Edits existing messages when status changes (no duplicates)
+- Shows only the latest status update with "Last checked" timestamp
 - Status indicators:
-  - :red_circle: Investigating
-  - :large_yellow_circle: Identified
-  - :large_blue_circle: Monitoring
-  - :large_green_circle: Resolved
+  - :rotating_light: Investigating
+  - :mag: Identified
+  - :eyes: Monitoring
+  - :speech_balloon: Update
+  - :white_check_mark: Resolved
+
+## Message Format
+
+```
+:clawd-down: Incident Title :clawd-down:
+────────────────────────────────────────
+`Jan 14, 14:17 UTC`  :white_check_mark: *Resolved* - This incident has been resolved.
+────────────────────────────────────────
+View on status page  ·  Last checked: Jan 14, 2026, 02:41 PM UTC
+```
 
 ## Setup
 
 ### 1. Create Slack App
 
 1. Go to [api.slack.com/apps](https://api.slack.com/apps) and create a new app
-2. Under **OAuth & Permissions**, add these Bot Token Scopes:
-   - `chat:write` - Post messages
-   - `chat:write.public` - Post to public channels without joining
-3. Install the app to your workspace
-4. Copy the **Bot User OAuth Token** (starts with `xoxb-`)
+2. Under **OAuth & Permissions**, add Bot Token Scopes:
+   - `chat:write`
+   - `chat:write.public`
+3. Install to workspace and copy the **Bot User OAuth Token** (`xoxb-...`)
 
-### 2. Get Channel ID
+### 2. Configure GitHub Secrets
 
-1. Right-click on the target Slack channel
-2. Click "View channel details"
-3. Scroll to the bottom and copy the Channel ID
+Add to your repository (Settings > Secrets and variables > Actions):
 
-### 3. Configure Secrets
+- `SLACK_BOT_TOKEN` - Bot token (`xoxb-...`)
+- `SLACK_CHANNEL_ID` - Target channel ID (`C...`)
 
-Add these secrets to your GitHub repository (Settings > Secrets and variables > Actions):
+### 3. Run
 
-- `SLACK_BOT_TOKEN`: Your bot token (`xoxb-...`)
-- `SLACK_CHANNEL_ID`: Target channel ID (`C...`)
+The workflow runs automatically every 5 minutes, or trigger manually from the Actions tab.
 
-### 4. Local Development
+## Local Development
 
 ```bash
 npm install
 cp .env.example .env
-# Edit .env with your credentials
+# Edit .env with credentials
 npm run check
 ```
 
 ## How It Works
 
-1. Fetches RSS from `https://status.claude.com/history.rss`
-2. Parses incidents and extracts current status
-3. Compares with cached state to detect new/updated incidents
-4. Posts new incidents or updates existing Slack messages
-5. Saves state to `.cache/incidents.json`
-
-## GitHub Actions
-
-The workflow runs every 5 minutes and caches the incident state between runs. You can also trigger it manually from the Actions tab.
+1. Fetch RSS from `https://status.claude.com/history.rss`
+2. Parse incidents and extract current status
+3. Compare with cached state (`.cache/incidents.json`)
+4. New incident → post to Slack, store message timestamp
+5. Updated incident → edit existing Slack message
+6. Save state for next run
