@@ -1,0 +1,19 @@
+{
+  "name": "claude-status-slack-bot",
+  "version": "1.0.0",
+  "description": "Monitor Claude status page and post incidents to Slack",
+  "type": "module",
+  "scripts": {
+    "check": "node src/check-status.js"
+  },
+  "keywords": ["claude", "status", "slack", "bot", "rss"],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@slack/web-api": "^7.0.0",
+    "dotenv": "^16.0.0",
+    "fast-xml-parser": "^4.3.0"
+  }
+}
